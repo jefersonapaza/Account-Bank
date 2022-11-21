@@ -13,7 +13,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 /* Cuenta de Ahorro */
 public class SavingAccount implements IAccount {
 
+
     private String code;
+
     private Float amount;
     private String idCustomer;
     private String typeCustomer;
