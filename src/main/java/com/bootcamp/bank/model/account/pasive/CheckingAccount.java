@@ -1,13 +1,13 @@
 package com.bootcamp.bank.model.account.pasive;
 
 import com.bootcamp.bank.model.account.IAccount;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 
 @Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Document(collection = "checkingaccount")
