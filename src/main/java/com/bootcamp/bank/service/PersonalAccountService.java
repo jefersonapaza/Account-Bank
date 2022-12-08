@@ -2,6 +2,8 @@ package com.bootcamp.bank.service;
 
 import ch.qos.logback.classic.Logger;
 import com.bootcamp.bank.dto.AccountDto;
+import com.bootcamp.bank.dto.DepositMoneyDTO;
+import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.active.PersonalAccount;
 import com.bootcamp.bank.model.account.pasive.FixedTermAccount;
@@ -20,7 +22,7 @@ public class PersonalAccountService {
     PersonalAccountRepository personalAccountRepository;
 
     private static final Logger logger
-            = (Logger) LoggerFactory.getLogger(AccountService.class);
+            = (Logger) LoggerFactory.getLogger(PersonalAccountService.class);
 
     public Flux<PersonalAccount> list(){
         return personalAccountRepository.findAll();
@@ -44,6 +46,41 @@ public class PersonalAccountService {
                 .flatMap(ca -> personalAccountRepository.delete(ca)
                         .then(Mono.just(Boolean.TRUE)))
                 .defaultIfEmpty(Boolean.FALSE);
+    }
+
+
+    public Mono<PersonalAccount> update(PersonalAccount personalAccount){
+        return personalAccountRepository.getPersonalAccountById(personalAccount.getId()).flatMap( ba -> {
+            return personalAccountRepository.save(personalAccount);
+        });
+    }
+
+    public Mono<String> depositMoneyPersonalAccount(DepositMoneyDTO depositMoneyDTO){
+        return personalAccountRepository.getPersonalAccountByCode(depositMoneyDTO.getCodeAccount())
+                .flatMap(ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.PERSONAL_ACCOUNT)){
+                        Float currentAmount = ba.getAmount();
+                        ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
+                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Personal-Account "));
+                });
+    }
+
+    public Mono<String> withdrawMoneyPersonalAccount(WithDrawMoneyDTO withDrawMoneyDTO){
+        return personalAccountRepository.getPersonalAccountByCode(withDrawMoneyDTO.getCodeAccount())
+                .flatMap(ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.PERSONAL_ACCOUNT)){
+                        Float currentAmount = ba.getAmount();
+                        Float newAmount = currentAmount - withDrawMoneyDTO.getAmount();
+                        if(newAmount < 0F){
+                            return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
+                        }
+                        ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
+                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Personal-Account"));
+                });
     }
 
 

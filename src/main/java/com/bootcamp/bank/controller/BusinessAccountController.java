@@ -3,6 +3,8 @@ package com.bootcamp.bank.controller;
 
 import com.bootcamp.bank.dto.AccountDto;
 import com.bootcamp.bank.dto.BusinessAccountDTO;
+import com.bootcamp.bank.dto.DepositMoneyDTO;
+import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
 import com.bootcamp.bank.service.BusinessAccountService;
@@ -33,25 +35,59 @@ public class BusinessAccountController {
 
     @PostMapping("/savePersonal")
     public Mono<ResponseEntity<BusinessAccount>> savePersonal(@RequestBody BusinessAccountDTO businessAccountDTO){
-        return businessAccountService.saveBusinessAccountforPersonal(businessAccountDTO)
-                .map(businessAccount -> new ResponseEntity<>(businessAccount , HttpStatus.CREATED))
-                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+
+           return businessAccountDTO.validator()
+                   .map(myerror -> new ResponseEntity<>(myerror , HttpStatus.CREATED) )
+                   .switchIfEmpty(
+                         businessAccountService.saveBusinessAccountforPersonal(businessAccountDTO)
+                          .map(businessAccount -> new ResponseEntity<>(businessAccount , HttpStatus.CREATED))
+                          .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                    );
     }
 
     @PostMapping("/saveBusiness")
     public Mono<ResponseEntity<BusinessAccount>> saveBusiness(@RequestBody BusinessAccountDTO businessAccountDTO){
-        return businessAccountService.saveBusinessAccountforBusiness(businessAccountDTO)
-                .map(businessAccount -> new ResponseEntity<>(businessAccount , HttpStatus.CREATED))
-                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+
+        return businessAccountDTO.validator()
+                .map(myerror -> new ResponseEntity<>(myerror , HttpStatus.CREATED) )
+                .switchIfEmpty(
+                        businessAccountService.saveBusinessAccountforBusiness(businessAccountDTO)
+                                .map(businessAccount -> new ResponseEntity<>(businessAccount , HttpStatus.CREATED))
+                                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
+
     }
 
     @DeleteMapping("/delete/{id}")
-    public Mono<ResponseEntity<String>> delete(@PathVariable String id) {
+    public Mono<ResponseEntity<String>> delete(@PathVariable Long id) {
         return businessAccountService.delete(id)
                 .filter(deleteSavingAccount -> deleteSavingAccount)
                 .map(deleteCustomer -> new ResponseEntity<>("Business-Account Deleted", HttpStatus.ACCEPTED))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
     }
+
+    @PostMapping("/depositMoney")
+    public Mono<ResponseEntity<String>> depositMoney(@RequestBody DepositMoneyDTO depositMoneyDTO){
+        return depositMoneyDTO.validator()
+                .switchIfEmpty(
+                         businessAccountService.depositMoneyBusinessAccount(depositMoneyDTO)
+                                 .map(depositMoney -> new ResponseEntity<>(depositMoney , HttpStatus.CREATED))
+                                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
+    }
+
+    @PostMapping("/withdrawMoney")
+    public Mono<ResponseEntity<String>> withdrawMoney(@RequestBody WithDrawMoneyDTO withDrawMoneyDTO){
+        return withDrawMoneyDTO.validator()
+                .switchIfEmpty(
+                        businessAccountService.withdrawMoneyBusinessAccount(withDrawMoneyDTO)
+                                .map(withdrawMoney -> new ResponseEntity<>(withdrawMoney , HttpStatus.CREATED))
+                                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
+    }
+
+
+
 
 
 }

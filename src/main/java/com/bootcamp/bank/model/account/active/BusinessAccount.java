@@ -2,7 +2,10 @@ package com.bootcamp.bank.model.account.active;
 
 import com.bootcamp.bank.model.account.IAccount;
 import lombok.*;
+import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import javax.validation.constraints.NotEmpty;
 
 import java.util.List;
 
@@ -13,6 +16,14 @@ import java.util.List;
 @NoArgsConstructor
 @Document(collection = "bussinessaccount")
 public class BusinessAccount implements IAccount {
+
+
+
+    @Id
+    private ObjectId _id;
+
+    @NotEmpty
+    private Long id;
 
     private String code;
     private String idCustomer;

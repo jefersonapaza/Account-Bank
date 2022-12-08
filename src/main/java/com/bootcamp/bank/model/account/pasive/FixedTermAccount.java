@@ -2,7 +2,11 @@ package com.bootcamp.bank.model.account.pasive;
 
 import com.bootcamp.bank.model.account.IAccount;
 import lombok.*;
+import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import javax.validation.constraints.NotEmpty;
 
 @Data
 @Getter
@@ -12,6 +16,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "fixedtermaccount")
 /* Cuenta a plazo fijo */
 public class FixedTermAccount implements IAccount {
+
+    @Id
+    private ObjectId _id;
+
+    @NotEmpty
+    private Long id;
 
     private String code;
     private Float amount;

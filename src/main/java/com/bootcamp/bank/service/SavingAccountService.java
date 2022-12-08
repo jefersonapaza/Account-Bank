@@ -2,6 +2,8 @@ package com.bootcamp.bank.service;
 
 import ch.qos.logback.classic.Logger;
 import com.bootcamp.bank.dto.AccountDto;
+import com.bootcamp.bank.dto.DepositMoneyDTO;
+import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.PersonalAccount;
 import com.bootcamp.bank.model.account.pasive.SavingAccount;
 import com.bootcamp.bank.repository.account.pasive.SavingAccountRepository;
@@ -20,7 +22,7 @@ public class SavingAccountService {
     SavingAccountRepository savingAccountRepository;
 
     private static final Logger logger
-            = (Logger) LoggerFactory.getLogger(AccountService.class);
+            = (Logger) LoggerFactory.getLogger(SavingAccountService.class);
 
     public Flux<SavingAccount> list(){
         return savingAccountRepository.findAll();
@@ -56,6 +58,41 @@ public class SavingAccountService {
                 .flatMap(ca -> savingAccountRepository.delete(ca)
                         .then(Mono.just(Boolean.TRUE)))
                 .defaultIfEmpty(Boolean.FALSE);
+    }
+
+    public Mono<SavingAccount> update(SavingAccount savingAccount){
+        return savingAccountRepository.getSavingAccountById(savingAccount.getId()).flatMap( ba -> {
+            return savingAccountRepository.save(savingAccount);
+        });
+    }
+
+    public Mono<String> depositMoneysavingAccount(DepositMoneyDTO depositMoneyDTO){
+        return savingAccountRepository.getSavingAccountByCode(depositMoneyDTO.getCodeAccount())
+                .flatMap(ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.SAVING_ACCOUNT)){
+                        Float currentAmount = ba.getAmount();
+                        ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
+                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Saving Account "));
+                });
+    }
+
+
+    public Mono<String> withdrawMoneysavingAccount(WithDrawMoneyDTO withDrawMoneyDTO){
+        return savingAccountRepository.getSavingAccountByCode(withDrawMoneyDTO.getCodeAccount())
+                .flatMap(ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.SAVING_ACCOUNT)){
+                        Float currentAmount = ba.getAmount();
+                        Float newAmount = currentAmount - withDrawMoneyDTO.getAmount();
+                        if(newAmount < 0F){
+                            return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
+                        }
+                        ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
+                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Saving Account "));
+                });
     }
 
 

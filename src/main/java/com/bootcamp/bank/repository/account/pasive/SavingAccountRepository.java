@@ -11,5 +11,8 @@ import reactor.core.publisher.Mono;
 public interface SavingAccountRepository extends ReactiveMongoRepository<SavingAccount,String> {
 
     Mono<SavingAccount> getByIdCustomer(String idCustomer);
+    Mono<SavingAccount> getSavingAccountByCode(String code);
+
+    Mono<SavingAccount> getSavingAccountById(Long id);
 
 }

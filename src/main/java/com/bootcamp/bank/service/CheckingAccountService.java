@@ -3,6 +3,9 @@ package com.bootcamp.bank.service;
 
 import ch.qos.logback.classic.Logger;
 import com.bootcamp.bank.dto.AccountDto;
+import com.bootcamp.bank.dto.DepositMoneyDTO;
+import com.bootcamp.bank.dto.WithDrawMoneyDTO;
+import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
 import com.bootcamp.bank.repository.account.pasive.CheckingAccountRepository;
 import com.bootcamp.bank.utils.Constants;
@@ -20,7 +23,7 @@ public class CheckingAccountService {
     private CheckingAccountRepository checkingAccountRepository;
 
     private static final Logger logger
-            = (Logger) LoggerFactory.getLogger(AccountService.class);
+            = (Logger) LoggerFactory.getLogger(CheckingAccountService.class);
 
 
     public Mono<CheckingAccount> savePersonalCheckingAccount(AccountDto accountDto){
@@ -69,6 +72,42 @@ public class CheckingAccountService {
                 .flatMap(ca -> checkingAccountRepository.delete(ca)
                         .then(Mono.just(Boolean.TRUE)))
                 .defaultIfEmpty(Boolean.FALSE);
+    }
+
+    public Mono<CheckingAccount> update(CheckingAccount checkingAccount){
+        return checkingAccountRepository.getCheckingAccountById(checkingAccount.getId()).flatMap( ba -> {
+            return checkingAccountRepository.save(checkingAccount);
+        });
+    }
+
+
+    public Mono<String> depositMoneyCheckingAccount(DepositMoneyDTO depositMoneyDTO){
+        return checkingAccountRepository.getCheckingAccountByCode(depositMoneyDTO.getCodeAccount())
+                .flatMap(ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.CHECKING_ACCOUNT)){
+                        Float currentAmount = ba.getAmount();
+                        ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
+                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Checking Account"));
+                });
+    }
+
+
+    public Mono<String> withdrawMoneyCheckingAccount(WithDrawMoneyDTO withDrawMoneyDTO){
+        return checkingAccountRepository.getCheckingAccountByCode(withDrawMoneyDTO.getCodeAccount())
+                .flatMap(ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.CHECKING_ACCOUNT)){
+                        Float currentAmount = ba.getAmount();
+                        Float newAmount = currentAmount - withDrawMoneyDTO.getAmount();
+                        if(newAmount < 0F){
+                            return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
+                        }
+                        ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
+                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Checking Account"));
+                });
     }
 
 

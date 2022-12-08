@@ -3,6 +3,8 @@ package com.bootcamp.bank.service;
 
 import ch.qos.logback.classic.Logger;
 import com.bootcamp.bank.dto.AccountDto;
+import com.bootcamp.bank.dto.DepositMoneyDTO;
+import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.CreditCardAccount;
 import com.bootcamp.bank.model.account.pasive.FixedTermAccount;
 import com.bootcamp.bank.repository.account.pasive.FixedTermAccountRepository;
@@ -20,7 +22,7 @@ public class FixedTermAccountService {
     private FixedTermAccountRepository fixedTermAccountRepository;
 
     private static final Logger logger
-            = (Logger) LoggerFactory.getLogger(AccountService.class);
+            = (Logger) LoggerFactory.getLogger(FixedTermAccountService.class);
 
 
     public Flux<FixedTermAccount> list(){
@@ -46,6 +48,40 @@ public class FixedTermAccountService {
                 .flatMap(ca -> fixedTermAccountRepository.delete(ca)
                         .then(Mono.just(Boolean.TRUE)))
                 .defaultIfEmpty(Boolean.FALSE);
+    }
+
+    public Mono<FixedTermAccount> update(FixedTermAccount fixedTermAccount){
+        return fixedTermAccountRepository.getFixedTermAccountById(fixedTermAccount.getId()).flatMap( ba -> {
+            return fixedTermAccountRepository.save(fixedTermAccount);
+        });
+    }
+
+    public Mono<String> depositMoneyFixedTermAccount(DepositMoneyDTO depositMoneyDTO){
+        return fixedTermAccountRepository.getFixedTermAccountByCode(depositMoneyDTO.getCodeAccount())
+                .flatMap(ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.FIXEDTERM_ACCOUNT)){
+                        Float currentAmount = ba.getAmount();
+                        ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
+                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Fixed-Term Account"));
+                });
+    }
+
+    public Mono<String> withdrawMoneyFixedTermAccount(WithDrawMoneyDTO withDrawMoneyDTO){
+        return fixedTermAccountRepository.getFixedTermAccountByCode(withDrawMoneyDTO.getCodeAccount())
+                .flatMap(ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.FIXEDTERM_ACCOUNT)){
+                        Float currentAmount = ba.getAmount();
+                        Float newAmount = currentAmount - withDrawMoneyDTO.getAmount();
+                        if(newAmount < 0F){
+                            return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
+                        }
+                        ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
+                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Fixed-Term Account"));
+                });
     }
 
 }

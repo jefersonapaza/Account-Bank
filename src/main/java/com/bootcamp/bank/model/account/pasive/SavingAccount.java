@@ -2,7 +2,11 @@ package com.bootcamp.bank.model.account.pasive;
 
 import com.bootcamp.bank.model.account.IAccount;
 import lombok.*;
+import org.bson.types.ObjectId;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import javax.validation.constraints.NotEmpty;
 
 @Data
 @Getter
@@ -13,6 +17,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 /* Cuenta de Ahorro */
 public class SavingAccount implements IAccount {
 
+
+    @Id
+    private ObjectId _id;
+
+    @NotEmpty
+    private Long id;
 
     private String code;
 

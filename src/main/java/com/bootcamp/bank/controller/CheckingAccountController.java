@@ -2,8 +2,9 @@ package com.bootcamp.bank.controller;
 
 
 import com.bootcamp.bank.dto.AccountDto;
+import com.bootcamp.bank.dto.DepositMoneyDTO;
+import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
-import com.bootcamp.bank.service.AccountService;
 import com.bootcamp.bank.service.CheckingAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,9 +40,15 @@ public class CheckingAccountController {
 
     @PostMapping("/saveBusiness")
     public Mono<ResponseEntity<CheckingAccount>> saveBusiness(@RequestBody  AccountDto accountDto){
-        return checkingAccountService.saveCheckingAccountBusiness(accountDto)
-                .map(checkingAccount -> new ResponseEntity<>(checkingAccount,HttpStatus.CREATED))
-                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+
+        return accountDto.validator()
+                .map(myerror -> new ResponseEntity<>(myerror , HttpStatus.CREATED) )
+                .switchIfEmpty(
+                        checkingAccountService.saveCheckingAccountBusiness(accountDto)
+                                .map(checkingAccount -> new ResponseEntity<>(checkingAccount,HttpStatus.CREATED))
+                                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
+
     }
 
 
@@ -51,6 +58,26 @@ public class CheckingAccountController {
                 .filter(deleteSavingAccount -> deleteSavingAccount)
                 .map(deleteCustomer -> new ResponseEntity<>("Checking-Account Deleted", HttpStatus.ACCEPTED))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+    }
+
+    @PostMapping("/depositMoney")
+    public Mono<ResponseEntity<String>> depositMoney(@RequestBody DepositMoneyDTO depositMoneyDTO){
+        return depositMoneyDTO.validator()
+                .switchIfEmpty(
+                        checkingAccountService.depositMoneyCheckingAccount(depositMoneyDTO)
+                                .map(businessAccount -> new ResponseEntity<>(businessAccount , HttpStatus.ACCEPTED))
+                                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
+    }
+
+    @PostMapping("/withdrawMoney")
+    public Mono<ResponseEntity<String>> withdrawMoney(@RequestBody WithDrawMoneyDTO withDrawMoneyDTO){
+        return withDrawMoneyDTO.validator()
+                .switchIfEmpty(
+                        checkingAccountService.withdrawMoneyCheckingAccount(withDrawMoneyDTO)
+                                .map(businessAccount -> new ResponseEntity<>(businessAccount , HttpStatus.ACCEPTED))
+                                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
     }
 
 }

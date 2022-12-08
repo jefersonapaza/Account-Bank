@@ -2,6 +2,8 @@ package com.bootcamp.bank.controller;
 
 
 import com.bootcamp.bank.dto.AccountDto;
+import com.bootcamp.bank.dto.DepositMoneyDTO;
+import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.active.CreditCardAccount;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
@@ -47,6 +49,26 @@ public class CreditCardAccountController {
                 .filter(deleteSavingAccount -> deleteSavingAccount)
                 .map(deleteCustomer -> new ResponseEntity<>("CreditCard-Account Deleted", HttpStatus.ACCEPTED))
                 .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+    }
+
+    @PostMapping("/depositMoney")
+    public Mono<ResponseEntity<String>> depositMoney(@RequestBody DepositMoneyDTO depositMoneyDTO){
+        return depositMoneyDTO.validator()
+                .switchIfEmpty(
+                        creditCardAccountService.depositMoneyCreditCardAccount(depositMoneyDTO)
+                                .map(savingAccount -> new ResponseEntity<>(savingAccount,HttpStatus.CREATED))
+                                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
+    }
+
+    @PostMapping("/withdrawMoney")
+    public Mono<ResponseEntity<String>> withdrawMoney(@RequestBody WithDrawMoneyDTO withDrawMoneyDTO){
+        return withDrawMoneyDTO.validator()
+                .switchIfEmpty(
+                        creditCardAccountService.withdrawMoneyCreditCardAccount(withDrawMoneyDTO)
+                                .map(savingAccount -> new ResponseEntity<>(savingAccount,HttpStatus.CREATED))
+                                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
     }
 
 }

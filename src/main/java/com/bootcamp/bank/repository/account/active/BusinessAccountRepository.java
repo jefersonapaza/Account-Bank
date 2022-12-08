@@ -11,6 +11,9 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface BusinessAccountRepository extends ReactiveMongoRepository<BusinessAccount,String> {
 
-    Flux<BusinessAccount> getByIdCustomer(String IdCustomer);
+    Flux<BusinessAccount> getBusinessAccountByIdCustomer(String idCustomer);
+    Mono<BusinessAccount> getBusinessAccountByCode(String code);
+
+    Mono<BusinessAccount> getBusinessAccountById(Long id);
 
 }
