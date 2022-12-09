@@ -49,8 +49,8 @@ public class PersonalAccountService {
             Movements movement = new Movements();
             movement.setType(Constants.MOV_ACCOUNT);
             movement.setCreation(new Date());
-            movement.setCode_customer(accountDto.getIdCustomer());
-            movement.setId_table(personalAccount1.getId());
+            movement.setCustomer(accountDto.getIdCustomer());
+            movement.setTable(personalAccount1.getId());
             movement.setStatus(1);
             return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(personalAccount1));
         });

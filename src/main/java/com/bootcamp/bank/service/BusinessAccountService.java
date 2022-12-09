@@ -62,8 +62,8 @@ public class BusinessAccountService {
                 Movements movement = new Movements();
                 movement.setType(Constants.MOV_ACCOUNT);
                 movement.setCreation(new Date());
-                movement.setCode_customer(businessAccountDTO.getIdCustomer());
-                movement.setId_table(businessAccount1.getId());
+                movement.setCustomer(businessAccountDTO.getIdCustomer());
+                movement.setTable(businessAccount1.getId());
                 movement.setStatus(1);
                 return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(businessAccount1));
             });
@@ -85,8 +85,8 @@ public class BusinessAccountService {
                 Movements movement = new Movements();
                 movement.setType(Constants.MOV_ACCOUNT);
                 movement.setCreation(new Date());
-                movement.setCode_customer(businessAccountDTO.getIdCustomer());
-                movement.setId_table(businessAccount1.getId());
+                movement.setCustomer(businessAccountDTO.getIdCustomer());
+                movement.setTable(businessAccount1.getId());
                 movement.setStatus(1);
                 return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(businessAccount1));
             });
@@ -137,6 +137,8 @@ public class BusinessAccountService {
                     return Mono.error(new IllegalArgumentException("It is not Business Account"));
                 });
     }
+
+
 
 
 

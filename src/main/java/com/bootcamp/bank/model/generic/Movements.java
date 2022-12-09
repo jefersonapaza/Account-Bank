@@ -21,10 +21,10 @@ public class Movements {
     private ObjectId _id;
 
     @NotEmpty
-    private Long id_table;
+    private Long table;
 
     @Null
-    private String code_customer;
+    private String customer;
 
     @NotEmpty
     private String type;

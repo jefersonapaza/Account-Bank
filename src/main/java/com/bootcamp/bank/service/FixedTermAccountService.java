@@ -50,8 +50,8 @@ public class FixedTermAccountService {
             Movements movement = new Movements();
             movement.setType(Constants.MOV_ACCOUNT);
             movement.setCreation(new Date());
-            movement.setCode_customer(accountDto.getIdCustomer());
-            movement.setId_table(fixedAccount1.getId());
+            movement.setCustomer(accountDto.getIdCustomer());
+            movement.setTable(fixedAccount1.getId());
             movement.setStatus(1);
             return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(fixedAccount1));
         });

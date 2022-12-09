@@ -7,11 +7,12 @@ import com.bootcamp.bank.service.BusinessAccountService;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 
 @Repository
 public interface MovementsRepository extends ReactiveMongoRepository<Movements,String> {
 
-
+    public Flux<Movements> getMovementsByCustomerAndStatusAndType(String customer , Integer status , String type);
 
 
 }

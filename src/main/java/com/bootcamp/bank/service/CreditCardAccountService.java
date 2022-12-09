@@ -51,8 +51,8 @@ public class CreditCardAccountService {
             Movements movement = new Movements();
             movement.setType(Constants.MOV_ACCOUNT);
             movement.setCreation(new Date());
-            movement.setCode_customer(accountDto.getIdCustomer());
-            movement.setId_table(creditCardAccount1.getId());
+            movement.setCustomer(accountDto.getIdCustomer());
+            movement.setTable(creditCardAccount1.getId());
             movement.setStatus(1);
             return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(creditCardAccount1));
         });
