@@ -2,6 +2,7 @@ package com.bootcamp.bank.service;
 
 import com.bootcamp.bank.model.DatabaseSequence;
 import com.bootcamp.bank.repository.DatabaseSequenceRepository;
+import com.bootcamp.bank.repository.generic.MovementsRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,9 @@ public class DatabaseSequenceService  {
 
     @Autowired
     DatabaseSequenceRepository databaseSequenceRepository;
+
+    @Autowired
+    MovementsRepository movementsRepository;
 
 
     public Mono<Long> generateSequence(String seq) {

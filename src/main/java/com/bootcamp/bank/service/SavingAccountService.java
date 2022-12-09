@@ -6,7 +6,9 @@ import com.bootcamp.bank.dto.DepositMoneyDTO;
 import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.PersonalAccount;
 import com.bootcamp.bank.model.account.pasive.SavingAccount;
+import com.bootcamp.bank.model.generic.Movements;
 import com.bootcamp.bank.repository.account.pasive.SavingAccountRepository;
+import com.bootcamp.bank.repository.generic.MovementsRepository;
 import com.bootcamp.bank.utils.Constants;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +17,16 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
+
 @Service
 public class SavingAccountService {
 
     @Autowired
     SavingAccountRepository savingAccountRepository;
+
+    @Autowired
+    MovementsRepository movementsRepository;
 
     private static final Logger logger
             = (Logger) LoggerFactory.getLogger(SavingAccountService.class);
@@ -45,7 +52,15 @@ public class SavingAccountService {
                         s.setAmount(accountDto.getAmount());
                         s.setTypeCustomer(Constants.BUSINESS);
                         s.setIdCustomer(accountDto.getIdCustomer());
-                        return savingAccountRepository.save(s);
+                        return savingAccountRepository.save(s).flatMap( savingAccount1 -> {
+                            Movements movement = new Movements();
+                            movement.setType(Constants.MOV_ACCOUNT);
+                            movement.setCreation(new Date());
+                            movement.setCode_customer(accountDto.getIdCustomer());
+                            movement.setId_table(savingAccount1.getId());
+                            movement.setStatus(1);
+                            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(savingAccount1));
+                        });
                     })
                             : Mono.error(new IllegalArgumentException("Personal clients can have only one current account"))
             );

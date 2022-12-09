@@ -7,7 +7,9 @@ import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.active.CreditCardAccount;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
+import com.bootcamp.bank.model.generic.Movements;
 import com.bootcamp.bank.repository.account.active.CreditCardAccountRepository;
+import com.bootcamp.bank.repository.generic.MovementsRepository;
 import com.bootcamp.bank.utils.Constants;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +17,16 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
+
 @Service
 public class CreditCardAccountService {
 
     @Autowired
     CreditCardAccountRepository creditCardAccountRepository;
+
+    @Autowired
+    MovementsRepository movementsRepository;
 
     private static final Logger logger
             = (Logger) LoggerFactory.getLogger(CreditCardAccountService.class);
@@ -40,7 +47,15 @@ public class CreditCardAccountService {
         creditCardAccount.setCode(accountDto.getCode());
         creditCardAccount.setAmount(accountDto.getAmount());
         creditCardAccount.setTypeCustomer(Constants.PERSONAL);
-        return creditCardAccountRepository.save(creditCardAccount);
+        return creditCardAccountRepository.save(creditCardAccount).flatMap( creditCardAccount1 -> {
+            Movements movement = new Movements();
+            movement.setType(Constants.MOV_ACCOUNT);
+            movement.setCreation(new Date());
+            movement.setCode_customer(accountDto.getIdCustomer());
+            movement.setId_table(creditCardAccount1.getId());
+            movement.setStatus(1);
+            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(creditCardAccount1));
+        });
     }
 
     public Mono<Boolean> delete(String id){

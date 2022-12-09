@@ -7,7 +7,9 @@ import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.active.PersonalAccount;
 import com.bootcamp.bank.model.account.pasive.FixedTermAccount;
+import com.bootcamp.bank.model.generic.Movements;
 import com.bootcamp.bank.repository.account.active.PersonalAccountRepository;
+import com.bootcamp.bank.repository.generic.MovementsRepository;
 import com.bootcamp.bank.utils.Constants;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +17,16 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
+
 @Service
 public class PersonalAccountService {
 
     @Autowired
     PersonalAccountRepository personalAccountRepository;
+
+    @Autowired
+    MovementsRepository movementsRepository;
 
     private static final Logger logger
             = (Logger) LoggerFactory.getLogger(PersonalAccountService.class);
@@ -38,7 +45,15 @@ public class PersonalAccountService {
         personalAccount.setCode(accountDto.getCode());
         personalAccount.setAmount(accountDto.getAmount());
         personalAccount.setTypeCustomer(Constants.PERSONAL);
-        return personalAccountRepository.save(personalAccount);
+        return personalAccountRepository.save(personalAccount).flatMap( personalAccount1 -> {
+            Movements movement = new Movements();
+            movement.setType(Constants.MOV_ACCOUNT);
+            movement.setCreation(new Date());
+            movement.setCode_customer(accountDto.getIdCustomer());
+            movement.setId_table(personalAccount1.getId());
+            movement.setStatus(1);
+            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(personalAccount1));
+        });
     }
 
     public Mono<Boolean> delete(String id){

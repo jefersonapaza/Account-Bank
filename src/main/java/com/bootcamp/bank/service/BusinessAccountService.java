@@ -8,14 +8,19 @@ import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
 import com.bootcamp.bank.model.account.pasive.FixedTermAccount;
+import com.bootcamp.bank.model.generic.Movements;
 import com.bootcamp.bank.repository.DatabaseSequenceRepository;
 import com.bootcamp.bank.repository.account.active.BusinessAccountRepository;
+import com.bootcamp.bank.repository.generic.MovementsRepository;
+import com.bootcamp.bank.service.generic.MovementsService;
 import com.bootcamp.bank.utils.Constants;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Date;
 
 @Service
 public class BusinessAccountService {
@@ -25,6 +30,10 @@ public class BusinessAccountService {
 
     @Autowired
     DatabaseSequenceService databaseSequenceService;
+
+
+    @Autowired
+    MovementsRepository movementsRepository;
 
     private static final Logger logger
             = (Logger) LoggerFactory.getLogger(BusinessAccountService.class);
@@ -38,16 +47,26 @@ public class BusinessAccountService {
     }
 
     public Mono<BusinessAccount> saveBusinessAccountforPersonal(BusinessAccountDTO businessAccountDTO){
+
         logger.info("SAVE : saveBusinessAccountforPersonal()");
         return databaseSequenceService.generateSequence(Constants.ACCOUNT_SEQUENCE).flatMap(sequence -> {
             BusinessAccount businessAccount = new BusinessAccount();
             businessAccount.setId(sequence);
+            businessAccount.setIdCustomer(businessAccountDTO.getIdCustomer());
             businessAccount.setCode(businessAccountDTO.getCode());
             businessAccount.setAmount(businessAccountDTO.getAmount());
             businessAccount.setTypeCustomer(Constants.PERSONAL);
             businessAccount.setHolder(businessAccountDTO.getHolder());
             businessAccount.setSignatureAuthorized(businessAccount.getSignatureAuthorized());
-            return businessAccountRepository.save(businessAccount);
+            return businessAccountRepository.save(businessAccount).flatMap( businessAccount1 -> {
+                Movements movement = new Movements();
+                movement.setType(Constants.MOV_ACCOUNT);
+                movement.setCreation(new Date());
+                movement.setCode_customer(businessAccountDTO.getIdCustomer());
+                movement.setId_table(businessAccount1.getId());
+                movement.setStatus(1);
+                return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(businessAccount1));
+            });
         });
     }
 
@@ -57,11 +76,20 @@ public class BusinessAccountService {
             BusinessAccount businessAccount = new BusinessAccount();
             businessAccount.setId(sequence);
             businessAccount.setCode(businessAccountDTO.getCode());
+            businessAccount.setIdCustomer(businessAccountDTO.getIdCustomer());
             businessAccount.setAmount(businessAccountDTO.getAmount());
             businessAccount.setTypeCustomer(Constants.BUSINESS);
             businessAccount.setHolder(businessAccountDTO.getHolder());
             businessAccount.setSignatureAuthorized(businessAccount.getSignatureAuthorized());
-            return businessAccountRepository.save(businessAccount);
+            return businessAccountRepository.save(businessAccount).flatMap( businessAccount1 -> {
+                Movements movement = new Movements();
+                movement.setType(Constants.MOV_ACCOUNT);
+                movement.setCreation(new Date());
+                movement.setCode_customer(businessAccountDTO.getIdCustomer());
+                movement.setId_table(businessAccount1.getId());
+                movement.setStatus(1);
+                return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(businessAccount1));
+            });
 
         });
 
@@ -69,9 +97,7 @@ public class BusinessAccountService {
     }
 
     public Mono<BusinessAccount> update(BusinessAccount businessAccount){
-        return businessAccountRepository.getBusinessAccountById(businessAccount.getId()).flatMap( ba -> {
-            return businessAccountRepository.save(businessAccount);
-        });
+        return businessAccountRepository.getBusinessAccountById(businessAccount.getId()).flatMap( ba -> businessAccountRepository.save(businessAccount));
     }
 
     public Mono<Boolean> delete(Long id){

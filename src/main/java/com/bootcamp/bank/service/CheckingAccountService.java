@@ -7,7 +7,9 @@ import com.bootcamp.bank.dto.DepositMoneyDTO;
 import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
+import com.bootcamp.bank.model.generic.Movements;
 import com.bootcamp.bank.repository.account.pasive.CheckingAccountRepository;
+import com.bootcamp.bank.repository.generic.MovementsRepository;
 import com.bootcamp.bank.utils.Constants;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +18,16 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
+
 @Service
 public class CheckingAccountService {
 
     @Autowired
     private CheckingAccountRepository checkingAccountRepository;
+
+    @Autowired
+    MovementsRepository movementsRepository;
 
     private static final Logger logger
             = (Logger) LoggerFactory.getLogger(CheckingAccountService.class);
@@ -40,7 +47,15 @@ public class CheckingAccountService {
                         s.setAmount(accountDto.getAmount());
                         s.setTypeCustomer(Constants.PERSONAL);
                         s.setIdCustomer(accountDto.getIdCustomer());
-                        return checkingAccountRepository.save(s);
+                        return checkingAccountRepository.save(s).flatMap( checkingAccount1 -> {
+                            Movements movement = new Movements();
+                            movement.setType(Constants.MOV_ACCOUNT);
+                            movement.setCreation(new Date());
+                            movement.setCode_customer(accountDto.getIdCustomer());
+                            movement.setId_table(checkingAccount1.getId());
+                            movement.setStatus(1);
+                            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(checkingAccount1));
+                        });
                     })
                             : Mono.error(new IllegalArgumentException("Personal clients can have only one current account"))
             );
@@ -55,7 +70,15 @@ public class CheckingAccountService {
         checkingAccount.setCode(accountDto.getCode());
         checkingAccount.setAmount(accountDto.getAmount());
         checkingAccount.setTypeCustomer(Constants.BUSINESS_ACCOUNT);
-        return checkingAccountRepository.save(checkingAccount);
+        return checkingAccountRepository.save(checkingAccount).flatMap( checkingAccount1 -> {
+            Movements movement = new Movements();
+            movement.setType(Constants.MOV_ACCOUNT);
+            movement.setCreation(new Date());
+            movement.setCode_customer(accountDto.getIdCustomer());
+            movement.setId_table(checkingAccount1.getId());
+            movement.setStatus(1);
+            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just(checkingAccount1));
+        });
     }
 
 

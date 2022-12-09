@@ -24,5 +24,16 @@ public class Constants {
     /*SECUENCIAS */
     public static final String ACCOUNT_SEQUENCE = "account_sequence";
 
+
+    /* MOVIMIENTOS */
+    public static final String MOV_ACCOUNT = "MOV_ACCOUNT";
+
+    public static final String MOV_CREDIT = "MOV_CREDIT" ;
+
+    public static final String MOV_CUSTOMER = "MOV_CUSTOMER";
+
+    public static final String MOV_PAY = "MOV_PAY";
+
+
 }
 
