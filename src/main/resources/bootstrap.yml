@@ -10,7 +10,7 @@ spring:
       port: 27017
       auto-index-creation: 'true'
       database: accountdb
-      host: localhost
+      host: mongodb
   application:
     name: ms-account
   config:
