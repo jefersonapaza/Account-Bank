@@ -1,4 +1,16 @@
+server:
+  port: 8081
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
 spring:
+  data:
+    mongodb:
+      port: 27017
+      auto-index-creation: 'true'
+      database: accountdb
+      host: localhost
   application:
     name: ms-account
   config:

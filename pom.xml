@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.nttdata.bank</groupId>
-	<artifactId>ms_account</artifactId>
+	<artifactId>ms-account</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ms-account</name>
 	<description>Demo account project for Spring Boot</description>
