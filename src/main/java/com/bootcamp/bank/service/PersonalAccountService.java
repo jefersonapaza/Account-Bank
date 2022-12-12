@@ -76,7 +76,16 @@ public class PersonalAccountService {
                     if(ba.getType().equalsIgnoreCase(Constants.PERSONAL_ACCOUNT)){
                         Float currentAmount = ba.getAmount();
                         ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
-                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                        return this.update(ba).flatMap( businessAccount1  -> {
+                            Movements movement = new Movements();
+                            movement.setType(Constants.MOV_DEPOSIT_MONEY);
+                            movement.setCreation(new Date());
+                            // movement.setCustomer(depositMoneyDTO.getIdCustomer());
+                            movement.setTable(businessAccount1.getId());
+                            movement.setStatus(1);
+                            movement.setDescription(depositMoneyDTO.getCodeAccount());
+                            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just("Money Update ..!! "));
+                        });
                     }
                     return Mono.error(new IllegalArgumentException("It is not Personal-Account "));
                 });
@@ -92,12 +101,26 @@ public class PersonalAccountService {
                             return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
                         }
                         ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
-                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                        return this.update(ba).flatMap( businessAccount1  -> {
+                            Movements movement = new Movements();
+                            movement.setType(Constants.MOV_WITHDRAW_MONEY);
+                            movement.setCreation(new Date());
+                            // movement.setCustomer(depositMoneyDTO.getIdCustomer());
+                            movement.setTable(businessAccount1.getId());
+                            movement.setStatus(1);
+                            movement.setDescription(withDrawMoneyDTO.getCodeAccount());
+                            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just("Money Update ..!! "));
+                        });
                     }
                     return Mono.error(new IllegalArgumentException("It is not Personal-Account"));
                 });
     }
 
-
+    public Mono<String> getMoneyAvailable(String code_account){
+        return personalAccountRepository.getPersonalAccountByCode(code_account)
+                .flatMap( ba -> {
+                    return Mono.just(ba.getAmount().toString());
+                }).switchIfEmpty(Mono.error(new IllegalArgumentException("Account not found !! ")));
+    }
 
 }

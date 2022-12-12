@@ -1,15 +1,11 @@
 package com.bootcamp.bank.service;
 
 import ch.qos.logback.classic.Logger;
-import com.bootcamp.bank.dto.AccountDto;
-import com.bootcamp.bank.dto.BusinessAccountDTO;
-import com.bootcamp.bank.dto.DepositMoneyDTO;
-import com.bootcamp.bank.dto.WithDrawMoneyDTO;
+import com.bootcamp.bank.dto.*;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
-import com.bootcamp.bank.model.account.pasive.CheckingAccount;
-import com.bootcamp.bank.model.account.pasive.FixedTermAccount;
+
 import com.bootcamp.bank.model.generic.Movements;
-import com.bootcamp.bank.repository.DatabaseSequenceRepository;
+
 import com.bootcamp.bank.repository.account.active.BusinessAccountRepository;
 import com.bootcamp.bank.repository.generic.MovementsRepository;
 import com.bootcamp.bank.service.generic.MovementsService;
@@ -21,6 +17,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class BusinessAccountService {
@@ -115,7 +112,17 @@ public class BusinessAccountService {
                     if(ba.getType().equalsIgnoreCase(Constants.BUSINESS_ACCOUNT)){
                         Float currentAmount = ba.getAmount();
                         ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
-                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                        return this.update(ba).flatMap( businessAccount1  -> {
+                                Movements movement = new Movements();
+                                movement.setType(Constants.MOV_DEPOSIT_MONEY);
+                                movement.setCreation(new Date());
+                               // movement.setCustomer(depositMoneyDTO.getIdCustomer());
+                                movement.setTable(businessAccount1.getId());
+                                movement.setStatus(1);
+                                movement.setDescription(depositMoneyDTO.getCodeAccount());
+                                return movementsRepository.save(movement).flatMap( movement1 -> Mono.just("Money Update ..!! "));
+
+                        });
                     }
                     return Mono.error(new IllegalArgumentException("It is not Business Account"));
                 });
@@ -132,13 +139,51 @@ public class BusinessAccountService {
                             return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
                         }
                         ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
-                        return this.update(ba).flatMap(lo -> Mono.just("Money Update  ! " ));
+                        return this.update(ba).flatMap( businessAccount1  -> {
+                            Movements movement = new Movements();
+                            movement.setType(Constants.MOV_WITHDRAW_MONEY);
+                            movement.setCreation(new Date());
+                            // movement.setCustomer(depositMoneyDTO.getIdCustomer());
+                            movement.setTable(businessAccount1.getId());
+                            movement.setStatus(1);
+                            movement.setDescription(withDrawMoneyDTO.getCodeAccount());
+                            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just("Money Update ..!! "));
+                        });
                     }
                     return Mono.error(new IllegalArgumentException("It is not Business Account"));
                 });
     }
 
 
+    public Mono<String> setHolders(HolderDTO holderDTO){
+        return businessAccountRepository.getBusinessAccountByCode(holderDTO.getCodeAccount())
+                .flatMap( ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.BUSINESS_ACCOUNT)){
+                        ba.setHolder(holderDTO.getHolders());
+                        return this.update(ba).flatMap(ba1 -> Mono.just("Holders Update ..!! "));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Business Account"));
+                });
+    }
+
+    public Mono<String> setsignatureAuthorized(SignatureAuthorizedDTO signatureAuthorizedDTO){
+        return businessAccountRepository.getBusinessAccountByCode(signatureAuthorizedDTO.getCodeAccount())
+                .flatMap( ba -> {
+                    if(ba.getType().equalsIgnoreCase(Constants.BUSINESS_ACCOUNT)){
+                        ba.setSignatureAuthorized(signatureAuthorizedDTO.getSignatures());
+                        return this.update(ba).flatMap(ba1 -> Mono.just("Signature Authorized Update ..!! "));
+                    }
+                    return Mono.error(new IllegalArgumentException("It is not Business Account"));
+
+                }).switchIfEmpty(Mono.error(new IllegalArgumentException("Account not found !! ")));
+    }
+
+    public Mono<String> getMoneyAvailable(String code_account){
+        return businessAccountRepository.getBusinessAccountByCode(code_account)
+                .flatMap( ba -> {
+                    return Mono.just(ba.getAmount().toString());
+                }).switchIfEmpty(Mono.error(new IllegalArgumentException("Account not found !! ")));
+    }
 
 
 

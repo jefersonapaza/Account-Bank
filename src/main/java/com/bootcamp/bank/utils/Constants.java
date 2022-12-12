@@ -34,6 +34,10 @@ public class Constants {
 
     public static final String MOV_PAY = "MOV_PAY";
 
+    public static final String MOV_DEPOSIT_MONEY = "DEPOSIT_MONEY";
+
+    public static final String MOV_WITHDRAW_MONEY = "WITHDRAW_MONEY";
+
 
 }
 

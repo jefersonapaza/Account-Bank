@@ -1,10 +1,7 @@
 package com.bootcamp.bank.controller;
 
 
-import com.bootcamp.bank.dto.AccountDto;
-import com.bootcamp.bank.dto.BusinessAccountDTO;
-import com.bootcamp.bank.dto.DepositMoneyDTO;
-import com.bootcamp.bank.dto.WithDrawMoneyDTO;
+import com.bootcamp.bank.dto.*;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
 import com.bootcamp.bank.model.generic.Movements;
@@ -89,8 +86,33 @@ public class BusinessAccountController {
                 );
     }
 
+    @PostMapping("/setholders")
+    public Mono<ResponseEntity<String>> setholders(@RequestBody HolderDTO holderDTO){
+        return holderDTO.validator()
+                .switchIfEmpty(
+                        businessAccountService.setHolders(holderDTO)
+                                .map(withdrawMoney -> new ResponseEntity<>(withdrawMoney , HttpStatus.CREATED))
+                                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
+    }
 
 
+    @PostMapping("/setsignatureAuthorized")
+    public Mono<ResponseEntity<String>> setsignatureAuthorized(@RequestBody HolderDTO holderDTO){
+        return holderDTO.validator()
+                .switchIfEmpty(
+                        businessAccountService.setHolders(holderDTO)
+                                .map(withdrawMoney -> new ResponseEntity<>(withdrawMoney , HttpStatus.CREATED))
+                                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST))
+                );
+    }
+
+    @GetMapping("/getMoneyAvailable/{code_account}")
+    public Mono<ResponseEntity<String>> getMoneyAvailable(@PathVariable String code_account){
+        return businessAccountService.getMoneyAvailable(code_account)
+                .map(moneyAvailable -> new ResponseEntity<>(moneyAvailable , HttpStatus.CREATED))
+                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+    }
 
 
 

@@ -77,7 +77,17 @@ public class CreditCardAccountService {
                     if(ba.getType().equalsIgnoreCase(Constants.CREDIT_CARD)){
                         Float currentAmount = ba.getAmount();
                         ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
-                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                        return this.update(ba).flatMap( creditCardAccount1  -> {
+                            Movements movement = new Movements();
+                            movement.setType(Constants.MOV_DEPOSIT_MONEY);
+                            movement.setCreation(new Date());
+                            // movement.setCustomer(depositMoneyDTO.getIdCustomer());
+                            movement.setTable(creditCardAccount1.getId());
+                            movement.setStatus(1);
+                            movement.setDescription(" CODE : " + depositMoneyDTO.getCodeAccount() + " AMOUNT : " + currentAmount.toString());
+                            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just("Money Update ..!! "));
+
+                        });
                     }
                     return Mono.error(new IllegalArgumentException("It is not Credit card Account"));
                 });
@@ -93,10 +103,27 @@ public class CreditCardAccountService {
                             return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
                         }
                         ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
-                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                        return this.update(ba).flatMap( creditCardAccount1  -> {
+                            Movements movement = new Movements();
+                            movement.setType(Constants.MOV_WITHDRAW_MONEY);
+                            movement.setCreation(new Date());
+                            // movement.setCustomer(depositMoneyDTO.getIdCustomer());
+                            movement.setTable(creditCardAccount1.getId());
+                            movement.setStatus(1);
+                            movement.setDescription(withDrawMoneyDTO.getCodeAccount());
+                            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just("Money Update ..!! "));
+                        });
                     }
                     return Mono.error(new IllegalArgumentException("It is not Credit card Account"));
                 });
+    }
+
+
+    public Mono<String> getMoneyAvailable(String code_account){
+        return creditCardAccountRepository.getCreditCardAccountByCode(code_account)
+                .flatMap( ba -> {
+                    return Mono.just(ba.getAmount().toString());
+                }).switchIfEmpty(Mono.error(new IllegalArgumentException("Account not found !! ")));
     }
 
 
