@@ -4,6 +4,7 @@ package com.bootcamp.bank.service;
 import ch.qos.logback.classic.Logger;
 import com.bootcamp.bank.dto.AccountDto;
 import com.bootcamp.bank.dto.DepositMoneyDTO;
+import com.bootcamp.bank.dto.HolderDTO;
 import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
@@ -110,7 +111,17 @@ public class CheckingAccountService {
                     if(ba.getType().equalsIgnoreCase(Constants.CHECKING_ACCOUNT)){
                         Float currentAmount = ba.getAmount();
                         ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
-                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                        return this.update(ba).flatMap( businessAccount1  -> {
+                            Movements movement = new Movements();
+                            movement.setType(Constants.MOV_DEPOSIT_MONEY);
+                            movement.setCreation(new Date());
+                            // movement.setCustomer(depositMoneyDTO.getIdCustomer());
+                            movement.setTable(businessAccount1.getId());
+                            movement.setStatus(1);
+                            movement.setDescription(" CODE : " + depositMoneyDTO.getCodeAccount() + " AMOUNT : " + currentAmount.toString());
+                            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just("Money Update ..!! "));
+
+                        });
                     }
                     return Mono.error(new IllegalArgumentException("It is not Checking Account"));
                 });
@@ -127,13 +138,27 @@ public class CheckingAccountService {
                             return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
                         }
                         ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
-                        return this.update(ba).flatMap(lo -> Mono.just("Money Update ! " ));
+                        return this.update(ba).flatMap( businessAccount1  -> {
+                            Movements movement = new Movements();
+                            movement.setType(Constants.MOV_WITHDRAW_MONEY);
+                            movement.setCreation(new Date());
+                            // movement.setCustomer(depositMoneyDTO.getIdCustomer());
+                            movement.setTable(businessAccount1.getId());
+                            movement.setStatus(1);
+                            movement.setDescription(" CODE : " + withDrawMoneyDTO.getCodeAccount() + " AMOUNT : " + currentAmount.toString());
+                            return movementsRepository.save(movement).flatMap( movement1 -> Mono.just("Money Update ..!! "));
+                        });
                     }
                     return Mono.error(new IllegalArgumentException("It is not Checking Account"));
                 });
     }
 
-
+    public Mono<String> getMoneyAvailable(String code_account){
+        return checkingAccountRepository.getCheckingAccountByCode(code_account)
+                .flatMap( ba -> {
+                    return Mono.just(ba.getAmount().toString());
+                }).switchIfEmpty(Mono.error(new IllegalArgumentException("Account not found !! ")));
+    }
 
 
 

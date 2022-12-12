@@ -68,6 +68,11 @@ public class PersonalAccountController {
                 );
     }
 
-
+    @GetMapping("/getMoneyAvailable/{code_account}")
+    public Mono<ResponseEntity<String>> getMoneyAvailable(@PathVariable String code_account){
+        return personalAccountService.getMoneyAvailable(code_account)
+                .map(moneyAvailable -> new ResponseEntity<>(moneyAvailable , HttpStatus.CREATED))
+                .defaultIfEmpty(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+    }
 
 }
