@@ -1,12 +1,10 @@
-package com.bootcamp.bank.service;
+package com.bootcamp.bank.service.active;
 
 import ch.qos.logback.classic.Logger;
 import com.bootcamp.bank.dto.AccountDto;
 import com.bootcamp.bank.dto.DepositMoneyDTO;
 import com.bootcamp.bank.dto.WithDrawMoneyDTO;
-import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.active.CreditCardAccount;
-import com.bootcamp.bank.model.account.pasive.CheckingAccount;
 import com.bootcamp.bank.model.generic.Movements;
 import com.bootcamp.bank.repository.account.active.CreditCardAccountRepository;
 import com.bootcamp.bank.repository.generic.MovementsRepository;
@@ -20,7 +18,7 @@ import reactor.core.publisher.Mono;
 import java.util.Date;
 
 @Service
-public class CreditCardAccountService {
+public  class CreditCardAccountService {
 
     @Autowired
     CreditCardAccountRepository creditCardAccountRepository;
@@ -47,6 +45,7 @@ public class CreditCardAccountService {
         creditCardAccount.setCode(accountDto.getCode());
         creditCardAccount.setAmount(accountDto.getAmount());
         creditCardAccount.setTypeCustomer(Constants.PERSONAL);
+        creditCardAccount.setTransaction(0);
         return creditCardAccountRepository.save(creditCardAccount).flatMap( creditCardAccount1 -> {
             Movements movement = new Movements();
             movement.setType(Constants.MOV_ACCOUNT);
@@ -76,7 +75,20 @@ public class CreditCardAccountService {
                 .flatMap(ba -> {
                     if(ba.getType().equalsIgnoreCase(Constants.CREDIT_CARD)){
                         Float currentAmount = ba.getAmount();
-                        ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
+                        Integer transaction = ba.getTransaction();
+                        Float newAmount = 0F;
+                        if(transaction <= Constants.CREDIT_CARD_MAX_TRANSACTION){
+                            newAmount = depositMoneyDTO.getAmount() + currentAmount;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }else{
+                            newAmount = depositMoneyDTO.getAmount() + currentAmount - Constants.COMMISION_TRANSACTION ;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }
+                        if(newAmount < 0F){
+                            return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
+                        }
                         return this.update(ba).flatMap( creditCardAccount1  -> {
                             Movements movement = new Movements();
                             movement.setType(Constants.MOV_DEPOSIT_MONEY);
@@ -98,11 +110,20 @@ public class CreditCardAccountService {
                 .flatMap(ba -> {
                     if(ba.getType().equalsIgnoreCase(Constants.CREDIT_CARD)){
                         Float currentAmount = ba.getAmount();
-                        Float newAmount = currentAmount - withDrawMoneyDTO.getAmount();
+                        Integer transaction = ba.getTransaction();
+                        Float newAmount = 0F;
+                        if(transaction <= Constants.CREDIT_CARD_MAX_TRANSACTION){
+                            newAmount = currentAmount - withDrawMoneyDTO.getAmount() ;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }else{
+                            newAmount = currentAmount + withDrawMoneyDTO.getAmount() - Constants.COMMISION_TRANSACTION;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }
                         if(newAmount < 0F){
                             return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
                         }
-                        ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
                         return this.update(ba).flatMap( creditCardAccount1  -> {
                             Movements movement = new Movements();
                             movement.setType(Constants.MOV_WITHDRAW_MONEY);

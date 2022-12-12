@@ -1,5 +1,6 @@
 package com.bootcamp.bank.model.account.active;
 
+import com.bootcamp.bank.model.account.Account;
 import com.bootcamp.bank.model.account.IAccount;
 import lombok.*;
 import org.bson.types.ObjectId;
@@ -12,28 +13,16 @@ import javax.validation.constraints.NotEmpty;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 @Document(collection = "personalaccount")
-public class PersonalAccount implements IAccount {
+public class PersonalAccount extends Account {
 
     @Id
     private ObjectId _id;
 
-    @NotEmpty
-    private Long id;
+    private Float limitAmount;
+    private Integer transaction;
 
-    private String code;
-    private String idCustomer;
-    private String typeCustomer;
-    private Float amount;
-
-    @Override
-    public String getType() {
-        return this.getClass().getSimpleName();
-    }
-
-    @Override
-    public String getTypeCustomer() {
-        return this.typeCustomer;
+    public PersonalAccount(){
+        super();
     }
 }

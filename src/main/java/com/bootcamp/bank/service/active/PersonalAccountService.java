@@ -1,12 +1,10 @@
-package com.bootcamp.bank.service;
+package com.bootcamp.bank.service.active;
 
 import ch.qos.logback.classic.Logger;
 import com.bootcamp.bank.dto.AccountDto;
 import com.bootcamp.bank.dto.DepositMoneyDTO;
 import com.bootcamp.bank.dto.WithDrawMoneyDTO;
-import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.active.PersonalAccount;
-import com.bootcamp.bank.model.account.pasive.FixedTermAccount;
 import com.bootcamp.bank.model.generic.Movements;
 import com.bootcamp.bank.repository.account.active.PersonalAccountRepository;
 import com.bootcamp.bank.repository.generic.MovementsRepository;
@@ -45,6 +43,7 @@ public class PersonalAccountService {
         personalAccount.setCode(accountDto.getCode());
         personalAccount.setAmount(accountDto.getAmount());
         personalAccount.setTypeCustomer(Constants.PERSONAL);
+        personalAccount.setTransaction(0);
         return personalAccountRepository.save(personalAccount).flatMap( personalAccount1 -> {
             Movements movement = new Movements();
             movement.setType(Constants.MOV_ACCOUNT);
@@ -75,7 +74,20 @@ public class PersonalAccountService {
                 .flatMap(ba -> {
                     if(ba.getType().equalsIgnoreCase(Constants.PERSONAL_ACCOUNT)){
                         Float currentAmount = ba.getAmount();
-                        ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
+                        Integer transaction = ba.getTransaction();
+                        Float newAmount = 0F;
+                        if(transaction <= Constants.PERSONAL_MAX_TRANSACTION){
+                            newAmount = depositMoneyDTO.getAmount() + currentAmount;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }else{
+                            newAmount = depositMoneyDTO.getAmount() + currentAmount - Constants.COMMISION_TRANSACTION ;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }
+                        if(newAmount < 0F){
+                            return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
+                        }
                         return this.update(ba).flatMap( businessAccount1  -> {
                             Movements movement = new Movements();
                             movement.setType(Constants.MOV_DEPOSIT_MONEY);
@@ -96,11 +108,20 @@ public class PersonalAccountService {
                 .flatMap(ba -> {
                     if(ba.getType().equalsIgnoreCase(Constants.PERSONAL_ACCOUNT)){
                         Float currentAmount = ba.getAmount();
-                        Float newAmount = currentAmount - withDrawMoneyDTO.getAmount();
+                        Integer transaction = ba.getTransaction();
+                        Float newAmount = 0F;
+                        if(transaction <= Constants.PERSONAL_MAX_TRANSACTION){
+                            newAmount = currentAmount - withDrawMoneyDTO.getAmount() ;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }else{
+                            newAmount = currentAmount + withDrawMoneyDTO.getAmount() - Constants.COMMISION_TRANSACTION;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }
                         if(newAmount < 0F){
                             return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
                         }
-                        ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
                         return this.update(ba).flatMap( businessAccount1  -> {
                             Movements movement = new Movements();
                             movement.setType(Constants.MOV_WITHDRAW_MONEY);

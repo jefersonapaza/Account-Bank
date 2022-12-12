@@ -1,5 +1,6 @@
 package com.bootcamp.bank.model.account.active;
 
+import com.bootcamp.bank.model.account.Account;
 import com.bootcamp.bank.model.account.IAccount;
 import lombok.*;
 import org.bson.types.ObjectId;
@@ -13,33 +14,23 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 @Document(collection = "bussinessaccount")
-public class BusinessAccount implements IAccount {
+public class BusinessAccount extends Account {
 
 
 
     @Id
     private ObjectId _id;
 
-    @NotEmpty
-    private Long id;
-
-    private String code;
-    private String idCustomer;
-    private String typeCustomer;
-    private Float amount;
+    private Float limitAmount;
+    private Integer transaction;
     private List<String> holder;
     private List<String> signatureAuthorized;
 
-
-    @Override
-    public String getType() {
-        return this.getClass().getSimpleName();
+    public BusinessAccount(){
+        super();
     }
 
-    @Override
-    public String getTypeCustomer() {
-        return this.typeCustomer;
-    }
+
+
 }

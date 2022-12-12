@@ -1,5 +1,6 @@
 package com.bootcamp.bank.model.account.pasive;
 
+import com.bootcamp.bank.model.account.Account;
 import com.bootcamp.bank.model.account.IAccount;
 import lombok.*;
 import org.bson.types.ObjectId;
@@ -12,29 +13,18 @@ import javax.validation.constraints.NotEmpty;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 @Document(collection = "fixedtermaccount")
 /* Cuenta a plazo fijo */
-public class FixedTermAccount implements IAccount {
+public class FixedTermAccount extends Account {
 
     @Id
     private ObjectId _id;
 
-    @NotEmpty
-    private Long id;
 
-    private String code;
-    private Float amount;
-    private String idCustomer;
-    private String typeCustomer;
 
-    @Override
-    public String getType() {
-        return this.getClass().getSimpleName();
-    }
+    private Integer transaction;
 
-    @Override
-    public String getTypeCustomer() {
-        return this.typeCustomer;
+    public FixedTermAccount(){
+        super();
     }
 }

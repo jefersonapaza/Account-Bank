@@ -5,7 +5,7 @@ import com.bootcamp.bank.dto.AccountDto;
 import com.bootcamp.bank.dto.DepositMoneyDTO;
 import com.bootcamp.bank.dto.WithDrawMoneyDTO;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
-import com.bootcamp.bank.service.CheckingAccountService;
+import com.bootcamp.bank.service.pasive.CheckingAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
