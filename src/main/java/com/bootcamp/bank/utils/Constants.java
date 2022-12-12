@@ -39,5 +39,15 @@ public class Constants {
     public static final String MOV_WITHDRAW_MONEY = "WITHDRAW_MONEY";
 
 
+    /*COSTO DE TRANSACCION*/
+    public static final Float COMMISION_TRANSACTION = 0.19F ;
+    public static final Integer SAVING_MAX_TRANSACTION = 5;
+    public static final Integer FIXEDTERM_MAX_TRANSACTION = 5;
+    public static final Integer CHECKING_MAX_TRANSACTION = 5;
+    public static final Integer BUSINESS_MAX_TRANSACTION = 5;
+    public static final Integer CREDIT_CARD_MAX_TRANSACTION = 5;
+    public static final Integer PERSONAL_MAX_TRANSACTION = 5;
+
+
 }
 

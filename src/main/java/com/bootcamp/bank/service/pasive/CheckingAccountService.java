@@ -1,12 +1,10 @@
-package com.bootcamp.bank.service;
+package com.bootcamp.bank.service.pasive;
 
 
 import ch.qos.logback.classic.Logger;
 import com.bootcamp.bank.dto.AccountDto;
 import com.bootcamp.bank.dto.DepositMoneyDTO;
-import com.bootcamp.bank.dto.HolderDTO;
 import com.bootcamp.bank.dto.WithDrawMoneyDTO;
-import com.bootcamp.bank.model.account.active.BusinessAccount;
 import com.bootcamp.bank.model.account.pasive.CheckingAccount;
 import com.bootcamp.bank.model.generic.Movements;
 import com.bootcamp.bank.repository.account.pasive.CheckingAccountRepository;
@@ -14,7 +12,6 @@ import com.bootcamp.bank.repository.generic.MovementsRepository;
 import com.bootcamp.bank.utils.Constants;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -71,6 +68,7 @@ public class CheckingAccountService {
         checkingAccount.setCode(accountDto.getCode());
         checkingAccount.setAmount(accountDto.getAmount());
         checkingAccount.setTypeCustomer(Constants.BUSINESS_ACCOUNT);
+        checkingAccount.setTransaction(0);
         return checkingAccountRepository.save(checkingAccount).flatMap( checkingAccount1 -> {
             Movements movement = new Movements();
             movement.setType(Constants.MOV_ACCOUNT);
@@ -110,7 +108,20 @@ public class CheckingAccountService {
                 .flatMap(ba -> {
                     if(ba.getType().equalsIgnoreCase(Constants.CHECKING_ACCOUNT)){
                         Float currentAmount = ba.getAmount();
-                        ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
+                        Integer transaction = ba.getTransaction();
+                        Float newAmount = 0F;
+                        if(transaction <= Constants.CHECKING_MAX_TRANSACTION){
+                            newAmount = currentAmount - depositMoneyDTO.getAmount() ;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }else{
+                            newAmount = currentAmount + depositMoneyDTO.getAmount() - Constants.COMMISION_TRANSACTION;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }
+                        if(newAmount < 0F){
+                            return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
+                        }
                         return this.update(ba).flatMap( businessAccount1  -> {
                             Movements movement = new Movements();
                             movement.setType(Constants.MOV_DEPOSIT_MONEY);
@@ -133,11 +144,20 @@ public class CheckingAccountService {
                 .flatMap(ba -> {
                     if(ba.getType().equalsIgnoreCase(Constants.CHECKING_ACCOUNT)){
                         Float currentAmount = ba.getAmount();
-                        Float newAmount = currentAmount - withDrawMoneyDTO.getAmount();
+                        Integer transaction = ba.getTransaction();
+                        Float newAmount = 0F;
+                        if(transaction <= Constants.CHECKING_MAX_TRANSACTION){
+                            newAmount = currentAmount - withDrawMoneyDTO.getAmount() ;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }else{
+                            newAmount = currentAmount + withDrawMoneyDTO.getAmount() - Constants.COMMISION_TRANSACTION;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }
                         if(newAmount < 0F){
                             return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
                         }
-                        ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
                         return this.update(ba).flatMap( businessAccount1  -> {
                             Movements movement = new Movements();
                             movement.setType(Constants.MOV_WITHDRAW_MONEY);

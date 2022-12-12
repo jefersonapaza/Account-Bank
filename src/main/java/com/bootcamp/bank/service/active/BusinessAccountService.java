@@ -1,14 +1,16 @@
-package com.bootcamp.bank.service;
+package com.bootcamp.bank.service.active;
 
 import ch.qos.logback.classic.Logger;
 import com.bootcamp.bank.dto.*;
 import com.bootcamp.bank.model.account.active.BusinessAccount;
 
+import com.bootcamp.bank.model.account.active.CreditCardAccount;
 import com.bootcamp.bank.model.generic.Movements;
 
 import com.bootcamp.bank.repository.account.active.BusinessAccountRepository;
+import com.bootcamp.bank.repository.account.active.CreditCardAccountRepository;
 import com.bootcamp.bank.repository.generic.MovementsRepository;
-import com.bootcamp.bank.service.generic.MovementsService;
+import com.bootcamp.bank.service.DatabaseSequenceService;
 import com.bootcamp.bank.utils.Constants;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
-import java.util.List;
 
 @Service
 public class BusinessAccountService {
@@ -54,6 +55,7 @@ public class BusinessAccountService {
             businessAccount.setAmount(businessAccountDTO.getAmount());
             businessAccount.setTypeCustomer(Constants.PERSONAL);
             businessAccount.setHolder(businessAccountDTO.getHolder());
+            businessAccount.setTransaction(0);
             businessAccount.setSignatureAuthorized(businessAccount.getSignatureAuthorized());
             return businessAccountRepository.save(businessAccount).flatMap( businessAccount1 -> {
                 Movements movement = new Movements();
@@ -77,6 +79,7 @@ public class BusinessAccountService {
             businessAccount.setAmount(businessAccountDTO.getAmount());
             businessAccount.setTypeCustomer(Constants.BUSINESS);
             businessAccount.setHolder(businessAccountDTO.getHolder());
+            businessAccount.setTransaction(0);
             businessAccount.setSignatureAuthorized(businessAccount.getSignatureAuthorized());
             return businessAccountRepository.save(businessAccount).flatMap( businessAccount1 -> {
                 Movements movement = new Movements();
@@ -111,7 +114,20 @@ public class BusinessAccountService {
                 .flatMap(ba -> {
                     if(ba.getType().equalsIgnoreCase(Constants.BUSINESS_ACCOUNT)){
                         Float currentAmount = ba.getAmount();
-                        ba.setAmount(depositMoneyDTO.getAmount() + currentAmount);
+                        Integer transaction = ba.getTransaction();
+                        Float newAmount = 0F;
+                        if(transaction <= Constants.BUSINESS_MAX_TRANSACTION){
+                            newAmount = depositMoneyDTO.getAmount() + currentAmount;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }else{
+                            newAmount = depositMoneyDTO.getAmount() + currentAmount - Constants.COMMISION_TRANSACTION ;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }
+                        if(newAmount < 0F){
+                            return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
+                        }
                         return this.update(ba).flatMap( businessAccount1  -> {
                                 Movements movement = new Movements();
                                 movement.setType(Constants.MOV_DEPOSIT_MONEY);
@@ -134,11 +150,20 @@ public class BusinessAccountService {
                 .flatMap(ba -> {
                     if(ba.getType().equalsIgnoreCase(Constants.BUSINESS_ACCOUNT)){
                         Float currentAmount = ba.getAmount();
-                        Float newAmount = currentAmount - withDrawMoneyDTO.getAmount();
+                        Integer transaction = ba.getTransaction();
+                        Float newAmount = 0F;
+                        if(transaction <= Constants.BUSINESS_MAX_TRANSACTION){
+                            newAmount = currentAmount - withDrawMoneyDTO.getAmount() ;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }else{
+                            newAmount = currentAmount - withDrawMoneyDTO.getAmount() - Constants.COMMISION_TRANSACTION;
+                            ba.setAmount(newAmount);
+                            ba.setTransaction(transaction+1);
+                        }
                         if(newAmount < 0F){
                             return Mono.error(new IllegalArgumentException("There is not enough money in the account !"));
                         }
-                        ba.setAmount(withDrawMoneyDTO.getAmount() + currentAmount);
                         return this.update(ba).flatMap( businessAccount1  -> {
                             Movements movement = new Movements();
                             movement.setType(Constants.MOV_WITHDRAW_MONEY);
@@ -184,7 +209,6 @@ public class BusinessAccountService {
                     return Mono.just(ba.getAmount().toString());
                 }).switchIfEmpty(Mono.error(new IllegalArgumentException("Account not found !! ")));
     }
-
 
 
 
